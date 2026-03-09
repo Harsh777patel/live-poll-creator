@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('./connection'); // Establish DB connection at startup
 
 //importing express
 const express = require("express");
@@ -21,20 +22,20 @@ io.on("connection", (socket) => {
 
   socket.on('join-room', (roomName) => {
     socket.join(roomName);
-    console.log('joined room '+roomName);
-    
+    console.log('joined room ' + roomName);
+
   });
 
-  socket.on('set-question', ({question, roomName}) => {
+  socket.on('set-question', ({ question, roomName }) => {
     console.log(question + ' in room ' + roomName);
-    
+
     socket.to(roomName).emit('get-question', question);
 
   })
 
-  socket.on('send-response', ({response,roomName}) => {
+  socket.on('send-response', ({ response, roomName }) => {
     console.log(response + ' in room ' + roomName);
-    
+
     socket.to(roomName).emit('get-response', response);
 
   })
