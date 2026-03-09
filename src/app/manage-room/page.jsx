@@ -7,7 +7,7 @@ import {
 } from "@tabler/icons-react";
 import * as Yup from "yup";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -29,7 +29,7 @@ const ManageRoom = () => {
 
   const fetchRoomList = async () => {
     setLoading(true);
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getall");
+    const res = await axios.get("/room/getall");
     console.log(res.data);
     setRoomList(res.data);
     setLoading(false);
@@ -43,7 +43,7 @@ const ManageRoom = () => {
 
     onSubmit: (values, { resetForm, setSubmitting }) => {
       axios
-        .post("https://live-poll-backend-akq0.onrender.com/room/add", values)
+        .post("/room/add", values)
         .then((result) => {
           toast.success("Room Created successfully!");
           resetForm();
@@ -65,7 +65,7 @@ const ManageRoom = () => {
   const deleteRoom = async (id) => {
     if (!confirm("Are you sure you want to delete this room")) return;
 
-    const res = await axios.delete(`https://live-poll-backend-akq0.onrender.com/room/delete/${id}`);
+    const res = await axios.delete(`/room/delete/${id}`);
     if (res.status === 200) {
       fetchRoomList();
       toast.success("Room Deleted Successfull");
@@ -179,58 +179,58 @@ const ManageRoom = () => {
           Quick Access to Your Poll Room Details. View, Enter, or Delete Your
           Poll Room
         </p>
-      <div className="container mx-auto text-black w-full shadow-xl overflow-x-auto">
-        {loading ? (
-          <p className="text-center text-black text-4xl font-bold mt-4">
-            Loading... Please Wait
-            <IconLoader3 className="animate-spin mx-auto font-bold" />
-          </p>
-        ) : (
-          <table className="mt-4 min-w-full ">
-            <thead className="border border-violet-700 text-white bg-violet-900">
-              <tr>
-                <th className="p-2">Room Id</th>
-                <th className="p-2">Room Title</th>
-                <th className="p-2">Created By</th>
-                <th className="p-2">Created At</th>
-                <th className="p-2">Set Question</th>
-                <th className="p-2">Delete</th>
-              </tr>
-            </thead>
-            <tbody className="bg-gray-100 text-center">
-              {roomList.map((room) => (
-                <tr key={room._id} className="border border-gray-200">
-                  <td className="p-2 border">{room._id}</td>
-                  <td className="p-2 border">{room.title}</td>
-                  <td className="p-2 border">{room.name}</td>
-                  <td className="p-2 border">
-                    {new Date(room.createdAt).toDateString()}
-                  </td>
-                  <td className="p-2 border">
-                    <Link
-                      className="bg-violet-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
-                      href={"/host/" + room._id}
-                    >
-                      Enter to {room.title}
-                      <IconDoorEnter />
-                    </Link>
-                  </td>
-                  <td className="p-2 border">
-                    <button
-                      className="bg-red-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
-                      onClick={() => deleteRoom(room._id)}
-                    >
-                      Delete {room.title}
-                      <IconTrash />
-                    </button>
-                  </td>
+        <div className="container mx-auto text-black w-full shadow-xl overflow-x-auto">
+          {loading ? (
+            <p className="text-center text-black text-4xl font-bold mt-4">
+              Loading... Please Wait
+              <IconLoader3 className="animate-spin mx-auto font-bold" />
+            </p>
+          ) : (
+            <table className="mt-4 min-w-full ">
+              <thead className="border border-violet-700 text-white bg-violet-900">
+                <tr>
+                  <th className="p-2">Room Id</th>
+                  <th className="p-2">Room Title</th>
+                  <th className="p-2">Created By</th>
+                  <th className="p-2">Created At</th>
+                  <th className="p-2">Set Question</th>
+                  <th className="p-2">Delete</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody className="bg-gray-100 text-center">
+                {roomList.map((room) => (
+                  <tr key={room._id} className="border border-gray-200">
+                    <td className="p-2 border">{room._id}</td>
+                    <td className="p-2 border">{room.title}</td>
+                    <td className="p-2 border">{room.name}</td>
+                    <td className="p-2 border">
+                      {new Date(room.createdAt).toDateString()}
+                    </td>
+                    <td className="p-2 border">
+                      <Link
+                        className="bg-violet-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
+                        href={"/host/" + room._id}
+                      >
+                        Enter to {room.title}
+                        <IconDoorEnter />
+                      </Link>
+                    </td>
+                    <td className="p-2 border">
+                      <button
+                        className="bg-red-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
+                        onClick={() => deleteRoom(room._id)}
+                      >
+                        Delete {room.title}
+                        <IconTrash />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
     </div>
   );
 };

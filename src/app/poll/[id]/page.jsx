@@ -1,5 +1,5 @@
 "use client";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -10,7 +10,7 @@ const Poll = () => {
   const { id } = useParams();
 
   const [socket, setSocket] = useState(
-    io("https://live-poll-backend-akq0.onrender.com", { autoConnect: false })
+    io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", { autoConnect: false })
   );
 
   const [roomData, setRoomData] = useState(null);
@@ -20,7 +20,7 @@ const Poll = () => {
 
   const fetchRoomData = async () => {
     socket.connect();
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getbyid/" + id);
+    const res = await axios.get("/room/getbyid/" + id);
     setAppear(true);
     setRoomData(res.data);
     const { title } = res.data;
@@ -52,7 +52,7 @@ const Poll = () => {
       </h1>
 
       <div className="mt-6 mx-auto w-full max-w-5xl px-4">
-        
+
         <div className=" bg-white px-4 py-3 rounded-lg text-left text-xl md:text-2xl font-semibold mb-6">
           <span className="mr-2">Question:</span>
           {appear ? (
@@ -64,9 +64,9 @@ const Poll = () => {
           )}
         </div>
 
-        
+
         <div className="flex flex-col mt-4 md:flex-row items-center justify-center gap-8">
-          
+
           <img
             src="/response.png"
             alt="Poll Illustration"

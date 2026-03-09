@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import React from "react";
 import { IconCheck, IconLoader3 } from "@tabler/icons-react";
 import Link from "next/link";
-import axios from "axios";
+import axios from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -38,7 +38,7 @@ const Signup = () => {
     },
     onSubmit: (values, { resetForm, setSubmitting }) => {
       axios
-        .post("https://live-poll-backend-akq0.onrender.com/user/add", values)
+        .post("/user/add", values)
         .then((result) => {
           toast.success("User Registered successfully");
           resetForm();
@@ -55,13 +55,13 @@ const Signup = () => {
 
   return (
     <div className="flex flex-col md:flex-row bg-violet-300 min-h-screen">
-      
+
       <div
         className="hidden md:block bg-cover bg-center  items-center justify-center w-full lg:m-20 md:w-1/2 md:h-auto"
         style={{ backgroundImage: "url('login-image.png')" }}
       ></div>
 
-      
+
       <div className="flex justify-start items-center w-full lg:mr-28 md:w-1/2 px-4 py-10 md:py-0">
         <form
           onSubmit={signupForm.handleSubmit}

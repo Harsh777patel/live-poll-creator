@@ -1,6 +1,6 @@
 "use client";
 import { IconCopy } from "@tabler/icons-react";
-import axios from "axios";
+import axios from "@/lib/axios";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -290,7 +290,7 @@ const Host = () => {
   const { id } = useParams();
 
   const [socket, setSocket] = useState(
-    io("https://live-poll-backend-akq0.onrender.com", { autoConnect: false })
+    io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", { autoConnect: false })
   );
 
   const [pollLink, setPollLink] = useState("");
@@ -319,7 +319,7 @@ const Host = () => {
   };
 
   const fetchRoomData = async () => {
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getbyid/" + id);
+    const res = await axios.get("/room/getbyid/" + id);
     console.log(res.data);
     setRoomData(res.data);
     const { title } = res.data;
