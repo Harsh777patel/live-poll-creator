@@ -18,28 +18,27 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  console.log("client connected");
+  console.log("Client connected:", socket.id);
 
   socket.on('join-room', (roomName) => {
     socket.join(roomName);
-    console.log('joined room ' + roomName);
-
+    console.log(`Socket ${socket.id} joined room: ${roomName}`);
   });
 
-  socket.on('set-question', ({ question, roomName }) => {
-    console.log(question + ' in room ' + roomName);
-
-    socket.to(roomName).emit('get-question', question);
-
-  })
+  socket.on('set-question', (payload) => {
+    // console.log(`Question "${payload.question}" sent to room: ${payload.roomName}`);
+    // Send to all clients in the room including sender
+    socket.to(payload.roomName).emit('get-question', payload);
+  });
 
   socket.on('send-response', ({ response, roomName }) => {
-    console.log(response + ' in room ' + roomName);
-
+    // console.log(`Response "${response}" sent to room: ${roomName}`);
     socket.to(roomName).emit('get-response', response);
+  });
 
-  })
-
+  socket.on('disconnect', () => {
+    console.log("Client disconnected:", socket.id);
+  });
 });
 
 //creating an express app

@@ -288,27 +288,54 @@ const options = {
 
 const Host = () => {
   const { id } = useParams();
-
-  const [socket, setSocket] = useState(
-    io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", { autoConnect: false })
-  );
-
-  const [pollLink, setPollLink] = useState("");
   const [answerList, setAnswerList] = useState([]);
   const [wordsList, setWordsList] = useState([]);
-  const [waiting, setWaiting] = useState(false);
+  const [waiting, setWaiting] = useState(true);
+
+  const [socket, setSocket] = useState(null);
+  const [isSocketReady, setIsSocketReady] = useState(false);
 
   useEffect(() => {
-    socket.connect();
+    const newSocket = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
+      autoConnect: false,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    });
+
+    newSocket.on("connect", () => {
+      console.log("Host Socket connected:", newSocket.id);
+      setIsSocketReady(true);
+    });
+
+    newSocket.on("disconnect", () => {
+      console.log("Host Socket disconnected");
+      setIsSocketReady(false);
+    });
+
+    setSocket(newSocket);
+    newSocket.connect();
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, []);
 
   const [roomData, setRoomData] = useState(null);
   const [question, setQuestion] = useState("");
   const [currentResponse, setCurrentResponse] = useState("");
+  const [questionType, setQuestionType] = useState("text");
+  const [activeQuestionType, setActiveQuestionType] = useState("text");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
 
   const copyLink = () => {
+    const linkToCopy = typeof window !== "undefined"
+      ? `${window.location.origin}/poll/${id}`
+      : `https://live-poll-creator.vercel.app/poll/${id}`;
+
     navigator.clipboard
-      .writeText("https://live-poll-creator.vercel.app/poll/" + id)
+      .writeText(linkToCopy)
       .then((result) => {
         toast.success("Link copied");
       })
@@ -319,47 +346,100 @@ const Host = () => {
   };
 
   const fetchRoomData = async () => {
-    const res = await axios.get("/room/getbyid/" + id);
-    console.log(res.data);
-    setRoomData(res.data);
-    const { title } = res.data;
-    socket.emit("join-room", title);
+    try {
+      const res = await axios.get("/room/getbyid/" + id);
+      console.log("Room data fetched:", res.data);
+      setRoomData(res.data);
+
+      // Join room after socket is ready
+      if (socket && isSocketReady) {
+        const { title } = res.data;
+        socket.emit("join-room", title);
+        console.log("Host joined room:", title);
+      }
+    } catch (error) {
+      console.error("Error fetching room data:", error);
+    }
   };
 
   useEffect(() => {
     fetchRoomData();
-  }, [id]);
+  }, [id, isSocketReady]);
 
   const askQuestion = () => {
-    socket.emit("set-question", { roomName: roomData.title, question });
-    toast.success("Question Sended to the Poll");
+    if (socket && isSocketReady && roomData && question.trim()) {
+      if (questionType === "poll" && pollOptions.some((opt) => opt.trim() === "")) {
+        toast.error("Please fill all poll options.");
+        return;
+      }
+
+      const payload = {
+        roomName: roomData.title,
+        question,
+        questionType,
+        options: questionType === "poll" ? pollOptions : [],
+      };
+
+      socket.emit("set-question", payload);
+      console.log("Question emitted:", payload);
+      toast.success("Question Sent to the Poll");
+
+      setAnswerList([]);
+      setActiveQuestionType(questionType);
+      setWaiting(true);
+
+      setQuestion(""); // Clear question input
+      if (questionType === "poll") {
+        setPollOptions(["", ""]);
+      }
+    } else {
+      toast.error("Not ready to send question");
+    }
   };
 
-  socket.on("get-response", (response) => {
-    setCurrentResponse(response);
-    setAnswerList([...answerList, response]);
-    console.log(answerList);
-  });
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleResponse = (response) => {
+      setCurrentResponse(response);
+      setAnswerList((prev) => [...prev, response]);
+    };
+
+    socket.on("get-response", handleResponse);
+
+    return () => {
+      socket.off("get-response", handleResponse);
+    };
+  }, [socket]);
 
   useEffect(() => {
     const wordCount = {};
-    setWaiting(true);
+    let isWaiting = answerList.length === 0;
+
+    if (activeQuestionType === "poll") {
+      isWaiting = false; // Show poll bars immediately even with 0 votes
+      pollOptions.forEach(opt => {
+        if (opt.trim()) wordCount[opt] = 0;
+      });
+    }
+
     answerList.forEach((answer) => {
-      if (wordCount[answer]) {
+      if (wordCount[answer] !== undefined) {
         wordCount[answer] += 1;
       } else {
         wordCount[answer] = 1;
       }
-      setWaiting(false);
+      isWaiting = false;
     });
 
-    console.log(wordCount);
+    setWaiting(isWaiting);
+
     const temp = Object.keys(wordCount).map((key) => {
       return { text: key, value: wordCount[key] };
     });
 
     setWordsList(temp);
-  }, [answerList]);
+  }, [answerList, activeQuestionType, pollOptions]);
 
   if (roomData === null) {
     return <h1>Loading room details...</h1>;
@@ -396,17 +476,66 @@ const Host = () => {
             What would you like to ask your audience?
           </label>
 
+          <div className="flex justify-center gap-4 mb-4">
+            <button
+              className={`px-4 py-2 rounded-md font-bold ${questionType === "text" ? "bg-violet-700 text-white" : "bg-gray-200 text-black"}`}
+              onClick={() => setQuestionType("text")}
+            >
+              Text Question
+            </button>
+            <button
+              className={`px-4 py-2 rounded-md font-bold ${questionType === "poll" ? "bg-violet-700 text-white" : "bg-gray-200 text-black"}`}
+              onClick={() => setQuestionType("poll")}
+            >
+              Poll Options
+            </button>
+          </div>
+
           <input
             type="text"
             placeholder="Type your question here..."
-            className="px-4 py-3 bg-gray-100 rounded-md border-2 shadow-xl w-full max-w-2xl mx-auto text-black"
+            className="px-4 py-3 bg-gray-100 rounded-md border-2 shadow-xl w-full max-w-2xl mx-auto text-black block mb-4"
             id="question"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
           />
 
+          {questionType === "poll" && (
+            <div className="w-full max-w-2xl mx-auto flex flex-col gap-2 mb-4">
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder={`Option ${idx + 1}`}
+                    className="px-4 py-2 bg-gray-100 rounded-md border text-black w-full"
+                    value={opt}
+                    onChange={(e) => {
+                      const newOpts = [...pollOptions];
+                      newOpts[idx] = e.target.value;
+                      setPollOptions(newOpts);
+                    }}
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      className="bg-red-500 text-white px-3 py-2 rounded-md font-bold"
+                      onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                    >
+                      X
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                className="bg-violet-500 text-white px-3 py-2 mt-2 rounded-md w-fit font-semibold"
+                onClick={() => setPollOptions([...pollOptions, ""])}
+              >
+                + Add Option
+              </button>
+            </div>
+          )}
+
           <button
-            className="px-4 py-3 mt-4 mb-4 text-white text-md bg-violet-700 rounded-md font-bold"
+            className="px-8 py-3 mt-4 mb-4 text-white text-md bg-violet-700 rounded-md font-bold mx-auto block"
             onClick={askQuestion}
           >
             Send Question
@@ -427,12 +556,32 @@ const Host = () => {
               />
             </div>
           ) : (
-            <div>
-              <h1 className="px-2 py-2 bg-white text-violet-800 rounded-lg w-2/3 sm:w-1/3 mx-auto font-semibold">
+            <div className="h-full flex flex-col">
+              <h1 className="px-2 py-2 bg-white text-violet-800 rounded-lg w-2/3 sm:w-1/3 mx-auto font-semibold mb-2">
                 Audience Response
               </h1>
-              <div className="bg-white p-2 rounded-lg mt-2 w-full h-[350px]">
-                <ReactWordcloud options={options} words={wordsList} />
+              <div className="bg-white p-2 rounded-lg flex-1 min-h-[350px] overflow-auto flex flex-col justify-center items-center">
+                {activeQuestionType === "text" ? (
+                  <ReactWordcloud options={options} words={wordsList} />
+                ) : (
+                  <div className="w-full px-8 py-4 space-y-4">
+                    {wordsList.map((item, idx) => {
+                      const total = answerList.length;
+                      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
+                      return (
+                        <div key={idx} className="w-full text-left">
+                          <div className="flex justify-between mb-1">
+                            <span className="font-semibold text-gray-700">{item.text}</span>
+                            <span className="font-semibold text-violet-700">{percentage}% ({item.value} votes)</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-4">
+                            <div className="bg-violet-600 h-4 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -208,20 +208,18 @@ const ManageRoom = () => {
                     </td>
                     <td className="p-2 border">
                       <Link
-                        className="bg-violet-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
+                        className="bg-violet-500 w-fit text-white px-4 py-1 rounded-full mx-auto block text-center"
                         href={"/host/" + room._id}
                       >
-                        Enter to {room.title}
-                        <IconDoorEnter />
+                        Enter
                       </Link>
                     </td>
                     <td className="p-2 border">
                       <button
-                        className="bg-red-500 flex w-fit text-white px-2 py-1 rounded-full mx-auto gap-2"
+                        className="bg-red-500 w-fit text-white px-4 py-1 rounded-full mx-auto block"
                         onClick={() => deleteRoom(room._id)}
                       >
-                        Delete {room.title}
-                        <IconTrash />
+                        Delete
                       </button>
                     </td>
                   </tr>
