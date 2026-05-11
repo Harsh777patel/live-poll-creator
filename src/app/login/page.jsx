@@ -4,7 +4,7 @@ import { useFormik } from "formik";
 import React from "react";
 import { IconCheck, IconLoader3 } from "@tabler/icons-react";
 import Link from "next/link";
-import axios from "axios";
+import axios from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api";
@@ -44,7 +44,7 @@ const Login = () => {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-violet-300">
-      
+
       <div
         className="hidden md:block w-full lg:m-20 md:w-1/2 bg-cover bg-center"
         style={{ backgroundImage: "url('login-image.png')" }}
