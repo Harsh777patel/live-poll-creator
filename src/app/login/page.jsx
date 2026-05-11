@@ -7,16 +7,13 @@ import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string()
-    .required("Password must be correct")
-    .matches(/[a-z]/, "Lowercase letter is required")
-    .matches(/[A-Z]/, "Uppercase letter is required")
-    .matches(/[0-9]/, "Number is required")
-    .matches(/\W/, "Special character is required")
-    .min(8, "Minimum 8 characters required"),
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters"),
 });
 
 const Login = () => {
@@ -29,9 +26,10 @@ const Login = () => {
     },
     onSubmit: (values, { resetForm, setSubmitting }) => {
       axios
-        .get("https://live-poll-backend-akq0.onrender.com/user/getall", values)
-        .then(() => {
+        .post(`${API_BASE_URL}/user/authenticate`, values)
+        .then((result) => {
           toast.success("Login successfully");
+          localStorage.setItem("token", result.data.token);
           resetForm();
           router.push("/manage-room");
         })

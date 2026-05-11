@@ -4,13 +4,14 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { API_BASE_URL, SOCKET_URL } from "@/lib/api";
 
 const Poll = () => {
   const router = useRouter();
   const { id } = useParams();
 
   const [socket, setSocket] = useState(
-    io("https://live-poll-backend-akq0.onrender.com", { autoConnect: false })
+    io(SOCKET_URL, { autoConnect: false })
   );
 
   const [roomData, setRoomData] = useState(null);
@@ -19,12 +20,22 @@ const Poll = () => {
   const [appear, setAppear] = useState(true);
 
   const fetchRoomData = async () => {
-    socket.connect();
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getbyid/" + id);
-    setAppear(true);
-    setRoomData(res.data);
-    const { title } = res.data;
-    socket.emit("join-room", title);
+    try {
+      socket.connect();
+      const res = await axios.get(`${API_BASE_URL}/room/getbyid/` + id);
+      if (!res.data) {
+        setRoomData("not-found");
+        return;
+      }
+      setAppear(true);
+      setRoomData(res.data);
+      const { title } = res.data;
+      socket.emit("join-room", title);
+    } catch (err) {
+      console.error(err);
+      setRoomData("error");
+      toast.error("Failed to load poll details");
+    }
   };
 
   useEffect(() => {
@@ -42,7 +53,15 @@ const Poll = () => {
   });
 
   if (roomData === null) {
-    return <h1 className="text-center mt-10 text-2xl">Loading poll details...</h1>;
+    return <h1 className="text-center mt-10 text-2xl font-semibold text-gray-700">Loading poll details...</h1>;
+  }
+
+  if (roomData === "not-found") {
+    return <h1 className="text-center mt-10 text-2xl font-bold text-red-600">Poll not found. Please check the URL.</h1>;
+  }
+
+  if (roomData === "error") {
+    return <h1 className="text-center mt-10 text-2xl font-bold text-red-600">An error occurred while loading the poll.</h1>;
   }
 
   return (

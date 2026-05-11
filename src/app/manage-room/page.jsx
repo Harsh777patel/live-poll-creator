@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useFormik } from "formik";
+import { API_BASE_URL } from "@/lib/api";
 
 const ManageSchema = Yup.object().shape({
   name: Yup.string()
@@ -29,10 +30,16 @@ const ManageRoom = () => {
 
   const fetchRoomList = async () => {
     setLoading(true);
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getall");
-    console.log(res.data);
-    setRoomList(res.data);
-    setLoading(false);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/room/getall`);
+      console.log(res.data);
+      setRoomList(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to load rooms. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const manageForm = useFormik({
@@ -43,7 +50,7 @@ const ManageRoom = () => {
 
     onSubmit: (values, { resetForm, setSubmitting }) => {
       axios
-        .post("https://live-poll-backend-akq0.onrender.com/room/add", values)
+        .post(`${API_BASE_URL}/room/add`, values)
         .then((result) => {
           toast.success("Room Created successfully!");
           resetForm();
@@ -65,7 +72,7 @@ const ManageRoom = () => {
   const deleteRoom = async (id) => {
     if (!confirm("Are you sure you want to delete this room")) return;
 
-    const res = await axios.delete(`https://live-poll-backend-akq0.onrender.com/room/delete/${id}`);
+    const res = await axios.delete(`${API_BASE_URL}/room/delete/${id}`);
     if (res.status === 200) {
       fetchRoomList();
       toast.success("Room Deleted Successfull");

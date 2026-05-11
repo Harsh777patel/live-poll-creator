@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ReactWordcloud from "react-wordcloud";
 import { io } from "socket.io-client";
+import { API_BASE_URL, SOCKET_URL } from "@/lib/api";
 
 const words = [
   {
@@ -290,7 +291,7 @@ const Host = () => {
   const { id } = useParams();
 
   const [socket, setSocket] = useState(
-    io("https://live-poll-backend-akq0.onrender.com", { autoConnect: false })
+    io(SOCKET_URL, { autoConnect: false })
   );
 
   const [pollLink, setPollLink] = useState("");
@@ -319,7 +320,7 @@ const Host = () => {
   };
 
   const fetchRoomData = async () => {
-    const res = await axios.get("https://live-poll-backend-akq0.onrender.com/room/getbyid/" + id);
+    const res = await axios.get(`${API_BASE_URL}/room/getbyid/` + id);
     console.log(res.data);
     setRoomData(res.data);
     const { title } = res.data;

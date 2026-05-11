@@ -7,6 +7,7 @@ import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
 
 const SignupSchema = Yup.object().shape({
   name: Yup.string()
@@ -38,7 +39,7 @@ const Signup = () => {
     },
     onSubmit: (values, { resetForm, setSubmitting }) => {
       axios
-        .post("https://live-poll-backend-akq0.onrender.com/user/add", values)
+        .post(`${API_BASE_URL}/user/add`, values)
         .then((result) => {
           toast.success("User Registered successfully");
           resetForm();

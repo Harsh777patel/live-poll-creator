@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="relative overflow-hidden">
             <div className="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-4 py-4 sm:py-16">
               <div className="text-center">
-                <h1 className="text-3xl sm:text-6xl font-bold text-gray-800 dark:text-neutral-200">
+                <h1 className="text-3xl sm:text-6xl font-bold text-gray-800 dark:text-neutral-800">
                   Live Poll Creator
                 </h1>
                 <p className="mt-3 text-gray-600 dark:text-neutral-400">

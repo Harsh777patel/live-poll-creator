@@ -1,7 +1,26 @@
+"use client";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is logged in by checking localStorage for a token
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    router.push("/login");
+  };
+
   return (
     <div className="bg-violet-300 p-4">
       {/* ========== HEADER ========== */}
@@ -38,21 +57,33 @@ const Navbar = () => {
               Manage Room
             </Link>
 
-            {/* Sign Up */}
-            <Link
-              href="/signup"
-              className="px-3 py-2 text-lg text-violet-800 hover:text-neutral-500"
-            >
-              Sign Up
-            </Link>
+            {!isLoggedIn ? (
+              <>
+                {/* Sign Up */}
+                <Link
+                  href="/signup"
+                  className="px-3 py-2 text-lg text-violet-800 hover:text-neutral-500"
+                >
+                  Sign Up
+                </Link>
 
-            {/* Login */}
-            <Link
-              href="/login"
-              className="px-3 py-2 text-lg text-violet-800 hover:text-neutral-500"
-            >
-              Login
-            </Link>
+                {/* Login */}
+                <Link
+                  href="/login"
+                  className="px-3 py-2 text-lg text-violet-800 hover:text-neutral-500"
+                >
+                  Login
+                </Link>
+              </>
+            ) : (
+              /* Logout */
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 text-lg text-violet-800 hover:text-neutral-500 font-medium"
+              >
+                Logout
+              </button>
+            )}
 
             {/* Contact Us Button */}
             <Link
