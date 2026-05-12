@@ -330,6 +330,7 @@ const Host = () => {
   const [questionType, setQuestionType] = useState("text");
   const [activeQuestionType, setActiveQuestionType] = useState("text");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [activePollOptions, setActivePollOptions] = useState([]);
 
   const copyLink = () => {
     const linkToCopy = typeof window !== "undefined"
@@ -388,6 +389,11 @@ const Host = () => {
 
       setAnswerList([]);
       setActiveQuestionType(questionType);
+      if (questionType === "poll") {
+        setActivePollOptions(pollOptions);
+      } else {
+        setActivePollOptions([]);
+      }
       setWaiting(true);
 
       setQuestion(""); // Clear question input
@@ -420,7 +426,7 @@ const Host = () => {
 
     if (activeQuestionType === "poll") {
       isWaiting = false; // Show poll bars immediately even with 0 votes
-      pollOptions.forEach(opt => {
+      activePollOptions.forEach(opt => {
         if (opt.trim()) wordCount[opt] = 0;
       });
     }
@@ -441,7 +447,7 @@ const Host = () => {
     });
 
     setWordsList(temp);
-  }, [answerList, activeQuestionType, pollOptions]);
+  }, [answerList, activeQuestionType, activePollOptions]);
 
   if (roomData === null) {
     return <h1>Loading room details...</h1>;

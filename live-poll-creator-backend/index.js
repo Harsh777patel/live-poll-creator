@@ -25,10 +25,10 @@ io.on("connection", (socket) => {
     
   });
 
-  socket.on('set-question', ({question, roomName}) => {
-    console.log(question + ' in room ' + roomName);
+  socket.on('set-question', (payload) => {
+    console.log(payload.question + ' in room ' + payload.roomName);
     
-    socket.to(roomName).emit('get-question', question);
+    socket.to(payload.roomName).emit('get-question', payload);
 
   })
 
